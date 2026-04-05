@@ -1,0 +1,6 @@
+style
+space x = 10
+houdini (x > 5) {
+    catapult x
+}
+borderline
