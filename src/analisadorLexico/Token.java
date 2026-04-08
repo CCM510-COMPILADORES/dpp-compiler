@@ -2,16 +2,21 @@ package analisadorLexico;
 
 public class Token {
 
-    String tipo;
-    InputTable ref;
+    protected String tipo;
+    protected  InputTable ref;
+    private int line;
 
     public Token(String tipo, InputTable input) {
         this.tipo = tipo;
         this.ref = input;
     }
 
+    public void setLine(int line) {
+        this.line = line;
+    }
+
     @Override
     public String toString() {
-        return "<" + tipo + "," + ref + ">";
+        return "<" + tipo + "," + line + "," + ref + ">";
     }
 }
