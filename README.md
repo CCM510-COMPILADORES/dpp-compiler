@@ -18,8 +18,8 @@ Esse projeto implementa uma linguagem fictícia "Dhara", tendo suas palavras res
 | Começar/terminar texto     | `“”`                | `“”`                 |
 | Declaração de variável     | `tipos acima`       | —                    |
 | Atribuição                 | =                   | :=                   |
-| Entrada (input)            | `pleaser`           | leia                 |
-| Saída (print)              | `catapult`          | escreva              |
+| Declarar função            | `pleaser`           | function             |
+| Retornar                   | `catapult`          | retorna              |
 | Estrutura condicional if   | `houdini`           | se                   |
 | Estrutura condicional else | `more`              | senao                |
 | Laço while                 | `problems`          | enquanto             |
@@ -57,16 +57,20 @@ op_arit → `+`  | `-`  | `*`  | `/` | `%`
 tipo       → `space` | `lithium` | `judas`
 atribuicao → tipo id `=` expressao `;`| id `=` expressao `;`
 declaracao → tipo id `;`
-expressao  → expressao op_arit expressao | `(` expressao `)` | num | id
-condicao   → id op_comp num | id op_comp id | num op_comp num | `(` condicao `)`
+expressao  → expressao op_arit expressao | `(` expressao `)` | num | palavra | id
+condicao   → condicao  op_comp condicao  | `(` condicao  `)` | num | id
 
 comando → atribuicao | entrada | saida | if | while | do_while | for
 
-entrada → `pleaser` `(` “%i” id `)` `;` | `pleaser` `(` “%f” id `)` `;` | `pleaser` `(` “%s” id `)` `;`
-saida   → `catapult` expressao `;`
+parametros_criacao  → parametros_criacao  | parametros_criacao  `,` parametros_criacao  |
+                      tipo id
+parametros_passagem → parametros_passagem | parametros_passagem `,` parametros_passagem |
+                      expressao
+declarar_funcao     → tipo `pleaser` id `(` parametros_criacao `)` `{` comando*  `catapult` expressao `}`
+chamar_funcao       → id `(` parametros_passagem `)` `;`
 
-if        → `houdini` `(` condicao `)` `{` comando* `}` |
-            `houdini` `(` condicao `)` `{` comando* `}` `more` `{` comando* `}`
+if        → `houdini`  `(` condicao `)` `{` comando* `}` |
+            `houdini`  `(` condicao `)` `{` comando* `}` `more` `{` comando* `}`
 while     → `problems` `(` condicao `)` `{` comando* `}`
 do_while  → `not...ok` `{` comando* `}` `while` `(` condicao `)` `;`
 for       → `bloomfield` `(` atribuicao condicao atribuicao `)` `{` comando* `}`
@@ -81,13 +85,55 @@ codigo  → comando* codigo*
 ### Código em DPP
 ```
 style
-lithium x;
+space x;
+
+bloomfield(x=0; x<=10; x++) {
+    catapult(x);
+}
+
+houdini(x == 10) {
+    lithium y;
+
+    catapult("Digite um número decimal: ");
+    pleaser("%f", y);
+    catapult("Você digitou: " + y);
+}
+
+houdini(y < 10.5) {
+    problems(y < 11) {
+        y++;
+    }
+} more {
+    lithium res = x*y;
+    catapult("X*Y é igual a: " + res);
+}
 borderline
 ```
 
-### Código Traduzido para X
+### Código Traduzido para C
 ```C
 int main(){
   int x;
+
+  for(x=0; x<=10; x++){
+    printf("%d", x);
+  }
+
+  if(x==10){
+    float y;
+
+    printf("Digite um numero decimal: ");
+    scanf("%f", &y);
+    printf("Voce digitou: %d", y);
+  }
+
+  if(y < 10.5){
+    while(y < 11){
+        y++;
+    }
+  } else{
+    float res = x*y;
+    printf("X*Y e' igual a: %f", res);
+  }
 }
 ```

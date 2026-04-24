@@ -1,6 +1,24 @@
 style
-space x = 10
-houdini (x > 5) {
-    catapult x
+space x;
+
+bloomfield(x=0; x<=10; x++) {
+    catapult(x);
+}
+
+houdini(x == 10) {
+    lithium y;
+
+    catapult("Digite um número decimal: ");
+    pleaser("%f", y);
+    catapult("Você digitou: " + y);
+}
+
+houdini(y < 10.5) {
+    problems(y < 11) {
+        y++;
+    }
+} more {
+    lithium res = x*y;
+    catapult("X*Y é igual a: " + res);
 }
 borderline
