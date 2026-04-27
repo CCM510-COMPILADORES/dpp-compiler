@@ -16,10 +16,11 @@ Esse projeto implementa uma linguagem fictícia "Dhara", tendo suas palavras res
 | Tipo decimal               | `lithium`           | decimal              |
 | Tipo texto/string          | `judas`             | texto                |
 | Começar/terminar texto     | `“”`                | `“”`                 |
-| Declaração de variável     | `tipos acima`       | —                    |
 | Atribuição                 | =                   | :=                   |
-| Declarar função            | `pleaser`           | function             |
-| Retornar                   | `catapult`          | retorna              |
+| Declarar função            | `PREY`              | function             |
+| Retornar                   | `HOMETOWN`          | retorna              |
+| Print (output)             | `pleaser`           | input                |
+| Scan  (input)              | `catapult`          | output               |
 | Estrutura condicional if   | `houdini`           | se                   |
 | Estrutura condicional else | `more`              | senao                |
 | Laço while                 | `problems`          | enquanto             |
@@ -42,41 +43,60 @@ Esse projeto implementa uma linguagem fictícia "Dhara", tendo suas palavras res
 ## Gramática Livre de Contexto (GLC)
 
 ```
-palavra → [a-zA-Z]+[a-zA-Z]*
-num     → [0-9]+
+palavra    → [a-zA-Z]+[a-zA-Z]*
+num        → [0-9]+
 
-id      → palavra+num*
-int     → num+
-float   → num+ '.' num+
-string  → `“`palavra*`”`
+id         → palavra+num*
+int        → num+
+float      → num+ '.' num+
+string     → `“`palavra*`”`
 
-op_log  → `&&` | `||` | `!`
-op_comp → `==` | `>=` | `<=` | `>` | `<` 
-op_arit → `+`  | `-`  | `*`  | `/` | `%`
+op_logic   → `&&` | `||`
+op_comp    → `==` | `!=` | `>=` | `<=` | `>` | `<` 
+op_arit    → `+`  | `-`  | `*`  | `/` | `%`
 
 tipo       → `space` | `lithium` | `judas`
 atribuicao → tipo id `=` expressao `;`| id `=` expressao `;`
 declaracao → tipo id `;`
-expressao  → expressao op_arit expressao | `(` expressao `)` | num | palavra | id
-condicao   → condicao  op_comp condicao  | `(` condicao  `)` | num | id
 
-comando → atribuicao | entrada | saida | if | while | do_while | for
+comentario → `~~` palavra* `\n`
 
-parametros_criacao  → parametros_criacao  | parametros_criacao  `,` parametros_criacao  |
-                      tipo id
-parametros_passagem → parametros_passagem | parametros_passagem `,` parametros_passagem |
-                      expressao
-declarar_funcao     → tipo `pleaser` id `(` parametros_criacao `)` `{` comando*  `catapult` expressao `}`
-chamar_funcao       → id `(` parametros_passagem `)` `;`
+expressao  → termo expressao'
+expressao' → op_arit termo expressao' | ε
+termo      → `(` expressao `)` | int | float | string | id | chamada_funcao
 
-if        → `houdini`  `(` condicao `)` `{` comando* `}` |
-            `houdini`  `(` condicao `)` `{` comando* `}` `more` `{` comando* `}`
+condicao   → termo condicao'
+condicao'  → (op_logic | op_comp) termo condicao' | ε
+termo      → `(` condicao `)`  | int | float | id
+
+saida      → `catapult` `[` expressao `]` `;`
+
+entrada           → `pleaser`  `[` entrada' `]` `;`
+entrada'          → `“` ponteiros `”` `,` identificadores
+ponteiros         → formatadores ponteiros'
+ponteiros'        → `,` ponteiros | ε
+identificadores   → id identificadores'
+identificadores'  → `,` identificadores | ε
+formatadores      → `%d` | `%f` | `%s`
+
+
+declaracao_funcao       → tipo `PREY` id `[` parametros_declaracao `]` `{` comando*  `HOMETOWN` expressao? `}`
+parametros_declaracao   → tipo id parametros_declaracao' | ε
+parametros_declaracao'  → `,` tipo id parametros_declaracao' | ε
+
+chamada_funcao          → id `[` parametros_chamada `]` `;`
+parametros_chamada      → expressao parametros_chamada'
+parametros_chamada'     → `,` expressao parametros_chamada' | ε
+
+if        → `houdini`  `(` condicao `)` `{` comando* `}` else
+else      → `more` `{` comando* `}` | ε
 while     → `problems` `(` condicao `)` `{` comando* `}`
 do_while  → `not...ok` `{` comando* `}` `while` `(` condicao `)` `;`
 for       → `bloomfield` `(` atribuicao condicao atribuicao `)` `{` comando* `}`
 
-main    → `style` codigo `borderline`
-codigo  → comando* codigo*
+comando   → comentario | atribuicao | entrada | saida | if | while | do_while | for | chamada_funcao
+main      → declaracao_funcao* `style` codigo `borderline`
+codigo    → comando* codigo* | ε
 ```
 
 ## Instruções Para Execução do Código
@@ -84,19 +104,24 @@ codigo  → comando* codigo*
 ## Exemplo de Código
 ### Código em DPP
 ```
-style
-space x;
-
-bloomfield(x=0; x<=10; x++) {
-    catapult(x);
+lithium PREY multiplicar[lithium a, lithium b] {
+    ~~ multiplica dois numeros
+    HOMETOWN a*b;
 }
 
-houdini(x == 10) {
-    lithium y;
+style
+space x;
+space q;
+lithium y;
 
-    catapult("Digite um número decimal: ");
-    pleaser("%f", y);
-    catapult("Você digitou: " + y);
+bloomfield(x=0; x<=10; x++) {
+    catapult[x];
+}
+
+houdini((x == 10) && (x != 0)) {
+    catapult["Digite um número inteiro e um decimal: "];
+    pleaser["%d,%f", q, y];
+    catapult["Você digitou: " + q + " e " + y];
 }
 
 houdini(y < 10.5) {
@@ -104,27 +129,32 @@ houdini(y < 10.5) {
         y++;
     }
 } more {
-    lithium res = x*y;
-    catapult("X*Y é igual a: " + res);
+    lithium res = multiplicar[q, y];
+    catapult["Q*Y é igual a: " + res];
 }
 borderline
 ```
 
 ### Código Traduzido para C
 ```C
+float multiplicar(float a, float b) {
+    // multiplica dois numeros
+    return a*b;
+}
+
 int main(){
   int x;
+  int q;
+  float y;
 
   for(x=0; x<=10; x++){
     printf("%d", x);
   }
 
-  if(x==10){
-    float y;
-
-    printf("Digite um numero decimal: ");
-    scanf("%f", &y);
-    printf("Voce digitou: %d", y);
+  if((x==10) && (x!=0)){
+    printf("Digite um numero decimal e um inteiro: ");
+    scanf("%d %f", &q, &y);
+    printf("Voce digitou: %d e %f", q, y);
   }
 
   if(y < 10.5){
@@ -132,8 +162,8 @@ int main(){
         y++;
     }
   } else{
-    float res = x*y;
-    printf("X*Y e' igual a: %f", res);
+    float res = multiplicar(q, y);
+    printf("Q*Y e' igual a: %f", res);
   }
 }
 ```
