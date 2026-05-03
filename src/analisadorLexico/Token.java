@@ -15,6 +15,19 @@ public class Token {
         this.line = line;
     }
 
+    public String getTipo() {
+        return tipo;
+    }
+
+    public String getLexema(){
+        return ref.getLexema();
+    }
+
+    public InputTable getRef() {
+        return ref;
+    }
+
+
     @Override
     public String toString() {
         return "<" + tipo + "," + line + "," + ref + ">";

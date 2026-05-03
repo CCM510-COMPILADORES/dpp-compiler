@@ -10,6 +10,11 @@ public class InputTable {
         this.linha = linha;
     }
 
+    public String getLexema() {
+        return lexema;
+    }
+
+
     @Override
     public String toString() {
         return lexema + "(linha " + linha + ")";
