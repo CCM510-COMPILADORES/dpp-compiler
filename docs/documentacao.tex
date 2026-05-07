@@ -1,0 +1,415 @@
+\documentclass[a4paper,12pt]{article}
+
+% Pacotes básicos
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{changepage}
+
+% Configuração da página
+\geometry{margin=2.5cm}
+\onehalfspacing
+
+% Configuração de código
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{orange},
+    breaklines=true,
+    frame=single,
+    showspaces=false,
+    showstringspaces=false
+}
+
+% Syntax highlighting da linguagem personalizada
+\lstdefinelanguage{Dhara}{
+    % keywords by group — each group can have its own color
+    morekeywords=[1]{style, borderline, PREY, HOMETOWN},
+    morekeywords=[2]{space, lithium, judas},
+    morekeywords=[3]{houdini, more, problems, bloomfield, loser},
+    morekeywords=[4]{catapult, pleaser},
+    sensitive=true,        % case-sensitive keywords
+    morestring=[b]",       % strings delimited by "
+    morecomment=[l]{~~},   % line comments starting with ~~
+}
+
+\lstdefinestyle{DharaStyle}{
+    language=Dhara,
+    basicstyle=\ttfamily\small,
+    keywordstyle=[1]\color{violet}\bfseries,   % style, borderline, PREY, HOMETOWN
+    keywordstyle=[2]\color{blue}\bfseries,     % space, lithium, judas
+    keywordstyle=[3]\color{orange}\bfseries,   % houdini, more, problems, bloomfield
+    keywordstyle=[4]\color{teal}\bfseries,     % catapult, pleaser
+    stringstyle=\color{red},
+    commentstyle=\color{gray}\itshape,
+    showstringspaces=false,
+    frame=single,
+    breaklines=true,
+}
+
+\lstdefinelanguage{Rust}{
+    keywords={
+        fn, let, mut, pub, impl, trait, struct, enum, match, if, else,
+        while, for, loop, return, break, continue, use, mod, crate,
+        self, Self, super, where, as, const, static, ref, type
+    },
+    keywordstyle=\color{blue}\bfseries,
+    ndkeywords={i32, i64, u32, u64, f32, f64, bool, String, Vec},
+    ndkeywordstyle=\color{teal},
+    identifierstyle=\color{black},
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{gray}\ttfamily,
+    stringstyle=\color{orange},
+    morestring=[b]",
+}
+
+\title{\textbf{Linguagem DPP}}
+\author{
+    Gabriel Santana Dias --- R.A. 22.225.017-7\\
+    Pedro Schneider \phantom{Dias} --- R.A. 22.225.016-9
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+% ==========================
+\section{Introdução}
+Este projeto implementa uma linguagem fictícia chamada \textbf{Dhara} (DPP), cujas palavras reservadas são baseadas em títulos de músicas.
+
+% ==========================
+\section{Analisador Léxico}
+\subsection{Expressões Regulares}
+
+\begin{itemize}
+
+    \item \textbf{Palavra}:  
+    \texttt{[a-zA-Z]+[a-zA-Z]*}
+
+    \item \textbf{Número}:  
+    \texttt{[0-9]+}
+
+    \begin{itemize}
+        \item \textbf{Identificador}:  
+        \texttt{palavra+num*}
+        
+        \item \textbf{Número inteiro}:  
+        \texttt{num+}
+
+        \item \textbf{Número float}:  
+        \texttt{num+ '.' num+}
+        
+        \item \textbf{String}:  
+        \texttt{" palavra* "}
+        
+        \item \textbf{Comentário de linha}:
+        \texttt{`\~{}\~{}` palavra* `\textbackslash n`}
+    \end{itemize}
+    
+    \item \textbf{Palavras reservadas}:
+        \begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
+         style   | borderline |
+         space   |  lithium   | judas
+        pleaser  |  catapult  |
+        houdini  |    more    |
+        problems | bloomfield |  not...ok
+          PREY   |  HOMETOWN  |
+        loser
+        \end{lstlisting}
+
+    \item \textbf{Operadores lógicos}:
+    \texttt{\&{}\&{} \ \ ||}
+        
+    \item \textbf{Operadores comparativos}:
+    \texttt{== \ \ !=  \ \ >= \ \ <= \ \ > \ \ <}
+
+    \item \textbf{Operadores aritméticos}:
+    \texttt{+ \ \ - \ \ * \ \ / \ \ \%}
+
+    \item \textbf{Delimitadores}:
+    \texttt{( \ ) \ \{ \ \}}
+
+    \item \textbf{Quebra de linha}:
+    \texttt{\textbackslash n}
+
+\end{itemize}
+
+% ==========================
+\newpage
+\section{Analisador Semântico}
+\subsection{Gramática Livre de Contexto (GLC)}
+
+\begin{adjustwidth}{-2cm}{-2cm}
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize]
+palavra    -> [a-zA-Z]+[a-zA-Z]*
+num        -> [0-9]+
+
+id         -> palavra+num*
+int        -> num+
+float      -> num+ '.' num+
+string     -> " palavra* "
+
+op_logic   -> && | ||
+op_comp    -> == | != | >= | <= | > | <
+op_arit    ->  + |  - |  * |  / | %
+
+tipo       -> `space` | `lithium` | `judas`
+atribuicao -> tipo id = expressao ; | id = expressao ;
+declaracao -> tipo id ;
+
+comentario -> `~~` palavra* `\n`
+
+expressao  -> termo expressao'
+expressao' -> op_arit termo expressao' | e
+termo      -> ( expressao ) | int | float | string | id | chamada_funcao
+
+condicao   -> termo condicao'
+condicao'  -> (op_logic | op_comp) termo condicao' | e
+
+saida             -> `catapult` [ expressao ] ;
+
+entrada           -> `pleaser` [ entrada' ] ;
+entrada'          -> " ponteiros " , identificadores
+ponteiros         -> formatadores ponteiros'
+ponteiros'        -> , ponteiros | e
+identificadores   -> id identificadores'
+identificadores'  -> , identificadores | e
+formatadores      -> %d | %f | %s
+
+declaracao_funcao       -> tipo `PREY` id [ parametros_declaracao ] { comando* `HOMETOWN` expressao? }
+parametros_declaracao   -> tipo id parametros_declaracao'
+parametros_declaracao'  -> , tipo id parametros_declaracao' | e
+
+chamada_funcao          -> id [ parametros_chamada ] ;
+parametros_chamada      -> expressao parametros_chamada'
+parametros_chamada'     -> , expressao parametros_chamada' | e
+
+if       -> `houdini` ( condicao ) { comando* } else
+else     -> `more` { comando* } | e
+while    -> `problems` ( condicao ) { comando* }
+do_while -> `not...ok` { comando* } while ( condicao ) ;
+for      -> `bloomfield` ( atribuicao condicao atribuicao ) { comando* }
+
+comando  -> comentario | atribuicao | entrada | saida | if | while | do_while | for | chamada_funcao
+main     -> declaracao_funcao* `style` codigo `borderline`
+codigo   -> comando* codigo* | e
+\end{lstlisting}
+\end{adjustwidth}
+
+% ==========================
+% ==========================
+\section{Execução do Compilador}
+
+O compilador foi desenvolvido em Java e está organizado na seguinte estrutura de diretórios:
+
+\begin{lstlisting}
+src/
+    analisadorLexico/
+    analisadorSemantico/
+    Main.java
+\end{lstlisting}
+
+\subsection{Pré-requisitos}
+\begin{itemize}
+    \item Java JDK 17 ou superior
+\end{itemize}
+
+\subsection{Compilação}
+
+A compilação deve ser feita a partir da raiz do projeto:
+
+\begin{lstlisting}
+javac -d bin src/Main.java src/analisadorLexico/*.java src/analisadorSemantico/*.java
+\end{lstlisting}
+
+O comando acima gera os arquivos compilados no diretório \texttt{bin/}.
+
+\subsection{Execução}
+
+Após a compilação, execute o compilador com:
+
+\begin{lstlisting}
+java -cp bin Main
+\end{lstlisting}
+
+% ==========================
+% ==========================
+\section{Características da Linguagem}
+
+A linguagem \textbf{Dhara (DPP)} foi projetada com sintaxe inspirada em linguagens tradicionais, como C.
+
+\begin{itemize}
+    \item \textbf{Tipagem}: linguagem de tipagem estática e forte, exigindo declaração explícita dos tipos das variáveis.
+    
+    \item \textbf{Tipos de dados suportados}:
+    \begin{itemize}
+        \item \texttt{space} --- números inteiros
+        \item \texttt{lithium} --- números de ponto flutuante
+        \item \texttt{judas} --- strings
+    \end{itemize}
+
+    \item \textbf{Estruturas condicionais}:
+    \begin{itemize}
+        \item \texttt{houdini} --- equivalente ao \texttt{if}
+        \item \texttt{more} --- equivalente ao \texttt{else}
+    \end{itemize}
+
+    \item \textbf{Estruturas de repetição}:
+    \begin{itemize}
+        \item \texttt{problems} --- equivalente ao \texttt{while}
+        \item \texttt{bloomfield} --- equivalente ao \texttt{for}
+        \item \texttt{not...ok} --- equivalente ao \texttt{do while}
+    \end{itemize}
+
+    \item \textbf{Funções}:
+    \begin{itemize}
+        \item Declaração de funções através da palavra reservada \texttt{PREY}
+        \item Retorno de valores utilizando \texttt{HOMETOWN}
+        \item Suporte a parâmetros e chamadas de função
+    \end{itemize}
+
+    \item \textbf{Operadores suportados}:
+    \begin{itemize}
+        \item Aritméticos: \texttt{+, -, *, /, \%}
+        \item Comparação: \texttt{==, !=, >, <, >=, <=}
+        \item Lógicos: \texttt{\&\&, ||}
+    \end{itemize}
+
+    \item \textbf{Entrada e saída}:
+    \begin{itemize}
+        \item \texttt{catapult} --- saída de dados no terminal
+        \item \texttt{pleaser} --- entrada de dados pelo usuário
+    \end{itemize}
+
+    \item \textbf{Comentários}:
+    \begin{itemize}
+        \item Comentários de linha iniciados por \texttt{\~{}\~{}}
+    \end{itemize}
+
+    \item \textbf{Estrutura principal do programa}:
+    \begin{itemize}
+        \item O programa principal inicia com \texttt{style} e termina com \texttt{borderline}
+    \end{itemize}
+\end{itemize}
+
+% ==========================
+\newpage
+\section{Exemplos de Código}
+
+\subsection{Código na Linguagem Criada}
+\begin{adjustwidth}{-1cm}{-1cm}
+\begin{lstlisting}[
+    style=DharaStyle,
+    basicstyle=\ttfamily\footnotesize,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt
+]
+lithium PREY multiplicar[lithium a, lithium b] {
+    ~~ multiplica dois numeros
+    HOMETOWN a*b;
+}
+
+style
+space x;
+space q;
+lithium y;
+
+bloomfield(x=0; x<=10; x++) {
+    catapult[x];
+}
+
+houdini((x == 10) && (x != 0)) {
+    catapult["Digite um numero inteiro e um decimal: "];
+    pleaser["%d,%f", q, y];
+    catapult["Voce digitou: " + q + " e " + y];
+}
+
+houdini(y < 10.5) {
+    problems(y < 11) {
+        y++;
+    }
+} more {
+    lithium res = multiplicar[q, y];
+    catapult["Q*Y e igual a: " + res];
+}
+borderline
+\end{lstlisting}
+\end{adjustwidth}
+
+\newpage
+\subsection{Código Traduzido (Rust)}
+\begin{adjustwidth}{-1cm}{-1cm}
+\begin{lstlisting}[
+    language=Rust,
+    basicstyle=\ttfamily\footnotesize,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    breaklines=true,
+    frame=single
+]
+fn multiplicar(a: f32, b: f32) -> f32 {
+    // multiplica dois numeros
+    a * b
+}
+
+fn main() {
+    let mut x: i32;
+    let mut q: i32 = 0;
+    let mut y: f32 = 0.0;
+
+    for i in 0..=10 {
+        x = i;
+        println!("{}", x);
+    }
+
+    x = 10;
+
+    if (x == 10) && (x != 0) {
+        use std::io;
+
+        println!("Digite um numero inteiro e um decimal:");
+
+        let mut entrada = String::new();
+        io::stdin().read_line(&mut entrada).unwrap();
+
+        let valores: Vec<&str> =
+            entrada.trim().split_whitespace().collect();
+
+        q = valores[0].parse().unwrap();
+        y = valores[1].parse().unwrap();
+
+        println!("Voce digitou: {} e {}", q, y);
+    }
+
+    if y < 10.5 {
+        while y < 11.0 {
+            y += 1.0;
+        }
+    } else {
+        let res: f32 = multiplicar(q as f32, y);
+        println!("Q*Y e igual a: {}", res);
+    }
+}
+\end{lstlisting}
+\end{adjustwidth}
+
+% ==========================
+
+\end{document}
