@@ -43,60 +43,58 @@ Esse projeto implementa uma linguagem fictícia "Dhara", tendo suas palavras res
 ## Gramática Livre de Contexto (GLC)
 
 ```
-palavra    → [a-zA-Z]+[a-zA-Z]*
-num        → [0-9]+
+palavra    -> [a-zA-Z]+[a-zA-Z]*
+num        -> [0-9]+
 
-id         → palavra+num*
-int        → num+
-float      → num+ '.' num+
-string     → `“`palavra*`”`
+id         -> palavra+num*
+int        -> num+
+float      -> num+ '.' num+
+string     -> " palavra* "
 
-op_logic   → `&&` | `||`
-op_comp    → `==` | `!=` | `>=` | `<=` | `>` | `<` 
-op_arit    → `+`  | `-`  | `*`  | `/` | `%`
+op_logic   -> && | ||
+op_comp    -> == | != | >= | <= | > | <
+op_arit    ->  + |  - |  * |  / | %
 
-tipo       → `space` | `lithium` | `judas`
-atribuicao → tipo id `=` expressao `;`| id `=` expressao `;`
-declaracao → tipo id `;`
+tipo       -> `space` | `lithium` | `judas`
+atribuicao -> tipo id = expressao ; | id = expressao ;
+declaracao -> tipo id ;
 
-comentario → `~~` palavra* `\n`
+comentario -> `~~` palavra* `\n`
 
-expressao  → termo expressao'
-expressao' → op_arit termo expressao' | ε
-termo      → `(` expressao `)` | int | float | string | id | chamada_funcao
+expressao  -> termo expressao'
+expressao' -> op_arit termo expressao' | e
+termo      -> ( expressao ) | int | float | string | id | chamada_funcao
 
-condicao   → termo condicao'
-condicao'  → (op_logic | op_comp) termo condicao' | ε
-termo      → `(` condicao `)`  | int | float | id
+condicao   -> termo condicao'
+condicao'  -> (op_logic | op_comp) termo condicao' | e
 
-saida      → `catapult` `[` expressao `]` `;`
+saida             -> `catapult` [ expressao ] ;
 
-entrada           → `pleaser`  `[` entrada' `]` `;`
-entrada'          → `“` ponteiros `”` `,` identificadores
-ponteiros         → formatadores ponteiros'
-ponteiros'        → `,` ponteiros | ε
-identificadores   → id identificadores'
-identificadores'  → `,` identificadores | ε
-formatadores      → `%d` | `%f` | `%s`
+entrada           -> `pleaser` [ entrada' ] ;
+entrada'          -> " ponteiros " , identificadores
+ponteiros         -> formatadores ponteiros'
+ponteiros'        -> , ponteiros | e
+identificadores   -> id identificadores'
+identificadores'  -> , identificadores | e
+formatadores      -> %d | %f | %s
 
+declaracao_funcao       -> tipo `PREY` id [ parametros_declaracao ] { comando* `HOMETOWN` expressao? }
+parametros_declaracao   -> tipo id parametros_declaracao'
+parametros_declaracao'  -> , tipo id parametros_declaracao' | e
 
-declaracao_funcao       → tipo `PREY` id `[` parametros_declaracao `]` `{` comando*  `HOMETOWN` expressao? `}`
-parametros_declaracao   → tipo id parametros_declaracao' | ε
-parametros_declaracao'  → `,` tipo id parametros_declaracao' | ε
+chamada_funcao          -> id [ parametros_chamada ] ;
+parametros_chamada      -> expressao parametros_chamada'
+parametros_chamada'     -> , expressao parametros_chamada' | e
 
-chamada_funcao          → id `[` parametros_chamada `]` `;`
-parametros_chamada      → expressao parametros_chamada'
-parametros_chamada'     → `,` expressao parametros_chamada' | ε
+if       -> `houdini` ( condicao ) { comando* } else
+else     -> `more` { comando* } | e
+while    -> `problems` ( condicao ) { comando* }
+do_while -> `not...ok` { comando* } while ( condicao ) ;
+for      -> `bloomfield` ( atribuicao condicao atribuicao ) { comando* }
 
-if        → `houdini`  `(` condicao `)` `{` comando* `}` else
-else      → `more` `{` comando* `}` | ε
-while     → `problems` `(` condicao `)` `{` comando* `}`
-do_while  → `not...ok` `{` comando* `}` `while` `(` condicao `)` `;`
-for       → `bloomfield` `(` atribuicao condicao atribuicao `)` `{` comando* `}`
-
-comando   → comentario | atribuicao | entrada | saida | if | while | do_while | for | chamada_funcao
-main      → declaracao_funcao* `style` codigo `borderline`
-codigo    → comando* codigo* | ε
+comando  -> comentario | atribuicao | entrada | saida | if | while | do_while | for | chamada_funcao
+main     -> declaracao_funcao* `style` codigo `borderline`
+codigo   -> comando* codigo* | e
 ```
 
 ## Instruções Para Execução do Código
