@@ -1,0 +1,242 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{changepage}
+\geometry{margin=2.5cm}
+
+\title{DPP Compiler \\ GLC da Linguagem ``Dhara''}
+\author{Pedro Schneider e Gabriel Santana Dias}
+\date{Abril 2026}
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{orange},
+    breaklines=true,
+    frame=single,
+    showspaces=false,
+    showstringspaces=false
+}
+
+\begin{document}
+\maketitle
+\section{Introdução}
+Este projeto implementa uma linguagem fictícia chamada \textbf{Dhara} (DPP), cujas palavras reservadas são baseadas em títulos de músicas.
+\section{Palavras-chave da Linguagem}
+\begin{longtable}{|l|c|l|}
+\hline
+\textbf{Função} & \textbf{DPP} & \textbf{Tradução} \\
+\hline
+Início do programa & style & --- \\
+Fim do programa & borderline & --- \\
+Comentário de linha & $\sim\sim$ & // (em C) ou \# (em Python) \\
+Tipo inteiro & space & inteiro \\
+Tipo decimal & lithium & decimal \\
+Tipo string & judas & texto \\
+Função & PREY & function \\
+Retorno & HOMETOWN & return \\
+Saída & catapult & output \\
+Entrada & pleaser & input \\
+If & houdini & se \\
+Else & more & senao \\
+While & problems & enquanto \\
+For & bloomfield & para \\
+Do...While & not...ok & faça enquanto \\
+Pare & loser & pare \\
+\hline
+\end{longtable}
+
+\newpage
+\section{Gramática Livre de Contexto (GLC)}
+\begin{adjustwidth}{-2cm}{-2cm}
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize]
+palavra    -> [a-zA-Z]+[a-zA-Z]*
+num        -> [0-9]+
+
+id         -> palavra+num*
+int        -> num+
+float      -> num+ '.' num+
+string     -> " palavra* "
+
+op_logic   -> && | ||
+op_comp    -> == | != | >= | <= | > | <
+op_arit    ->  + |  - |  * |  / | %
+
+tipo       -> `space` | `lithium` | `judas`
+atribuicao -> tipo id = expressao ; | id = expressao ;
+declaracao -> tipo id ;
+
+comentario -> `~~` palavra* `\n`
+
+expressao  -> termo expressao'
+expressao' -> op_arit termo expressao' | e
+termo      -> ( expressao ) | int | float | string | id | chamada_funcao
+
+condicao   -> termo condicao'
+condicao'  -> (op_logic | op_comp) termo condicao' | e
+
+saida             -> `catapult` [ expressao ] ;
+
+entrada           -> `pleaser` [ entrada' ] ;
+entrada'          -> " ponteiros " , identificadores
+ponteiros         -> formatadores ponteiros'
+ponteiros'        -> , ponteiros | e
+identificadores   -> id identificadores'
+identificadores'  -> , identificadores | e
+formatadores      -> %d | %f | %s
+
+declaracao_funcao       -> tipo `PREY` id [ parametros_declaracao ] { comando* `HOMETOWN` expressao? }
+parametros_declaracao   -> tipo id parametros_declaracao'
+parametros_declaracao'  -> , tipo id parametros_declaracao' | e
+
+chamada_funcao          -> id [ parametros_chamada ] ;
+parametros_chamada      -> expressao parametros_chamada'
+parametros_chamada'     -> , expressao parametros_chamada' | e
+
+if       -> `houdini` ( condicao ) { comando* } else
+else     -> `more` { comando* } | e
+while    -> `problems` ( condicao ) { comando* }
+do_while -> `not...ok` { comando* } while ( condicao ) ;
+for      -> `bloomfield` ( atribuicao condicao atribuicao ) { comando* }
+
+comando  -> comentario | atribuicao | entrada | saida | if | while | do_while | for | chamada_funcao
+main     -> declaracao_funcao* `style` codigo `borderline`
+codigo   -> comando* codigo* | e
+\end{lstlisting}
+\end{adjustwidth}
+
+\lstdefinelanguage{Dhara}{
+    % keywords by group — each group can have its own color
+    morekeywords=[1]{style, borderline, PREY, HOMETOWN},
+    morekeywords=[2]{space, lithium, judas},
+    morekeywords=[3]{houdini, more, problems, bloomfield, loser},
+    morekeywords=[4]{catapult, pleaser},
+    sensitive=true,        % case-sensitive keywords
+    morestring=[b]",       % strings delimited by "
+    morecomment=[l]{~~},   % line comments starting with ~~
+}
+
+\lstdefinestyle{DharaStyle}{
+    language=Dhara,
+    basicstyle=\ttfamily\small,
+    keywordstyle=[1]\color{violet}\bfseries,   % style, borderline, PREY, HOMETOWN
+    keywordstyle=[2]\color{blue}\bfseries,     % space, lithium, judas
+    keywordstyle=[3]\color{orange}\bfseries,   % houdini, more, problems, bloomfield
+    keywordstyle=[4]\color{teal}\bfseries,     % catapult, pleaser
+    stringstyle=\color{red},
+    commentstyle=\color{gray}\itshape,
+    showstringspaces=false,
+    frame=single,
+    breaklines=true,
+}
+
+\section{Exemplos de Código}
+\subsection{Declaração de Variável}
+\begin{lstlisting}[style=DharaStyle]
+space x;        ~~ int x;
+lithium y;      ~~ float y;
+judas texto;    ~~ string texto;
+\end{lstlisting}
+
+\subsection{Estrutura If-Else}
+\begin{lstlisting}[style=DharaStyle]
+houdini(x > 10) {
+    catapult["Maior que 10"];
+} more {
+    catapult["Menor ou igual a 10"];
+}
+\end{lstlisting}
+
+\subsection{Laço de Repetição}
+\begin{lstlisting}[style=DharaStyle]
+bloomfield(x=0; x<10; x++) {
+    catapult[x];
+}
+\end{lstlisting}
+
+\subsection{Declarar Função}
+\begin{lstlisting}[style=DharaStyle]
+space PREY funcao_que_retorna_inteiro[space x, space y] {
+    houdini(y != 0){
+        space resultado = x/y;
+    } more {
+        HOMETOWN;
+    }
+    HOMETOWN resultado;
+}
+\end{lstlisting}
+
+\newpage
+\section{Exemplo Completo}
+\subsection{Código em Dhara}
+\begin{lstlisting}[style=DharaStyle]
+lithium PREY multiplicar[lithium a, lithium b] {
+    ~~ multiplica dois numeros
+    HOMETOWN a*b;
+}
+
+style
+space x;
+space q;
+lithium y;
+
+bloomfield(x=0; x<=10; x++) {
+    catapult[x];
+}
+
+houdini((x == 10) && (x != 0)) {
+    catapult["Digite um numero inteiro e um decimal: "];
+    pleaser["%d,%f", q, y];
+    catapult["Voce digitou: " + q + " e " + y];
+}
+
+houdini(y < 10.5) {
+    problems(y < 11) {
+        y++;
+    }
+} more {
+    lithium res = multiplicar[q, y];
+    catapult["Q*Y e igual a: " + res];
+}
+borderline
+\end{lstlisting}
+
+\newpage
+\subsection{Código Equivalente em C}
+\begin{lstlisting}[language=C]
+float multiplicar(float a, float b) {
+    // multiplica dois numeros
+    return a*b;
+}
+
+int main(){
+  int x;
+  int q;
+  float y;
+
+  for(x=0; x<=10; x++){
+    printf("%d", x);
+  }
+
+  if((x==10) && (x!=0)){
+    printf("Digite um numero inteiro e um decimal: ");
+    scanf("%d %f", &q, &y);
+    printf("Voce digitou: %d e %f", q, y);
+  }
+
+  if(y < 10.5){
+    while(y < 11){
+        y++;
+    }
+  } else{
+    float res = multiplicar(q, y);
+    printf("Q*Y e igual a: %f", res);
+  }
+}
+\end{lstlisting}
+\end{document}
