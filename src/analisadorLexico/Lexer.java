@@ -21,6 +21,7 @@ public class Lexer {
         this.afds = new ArrayList<>();
         afds.add(new MathOperator(lexTable));
         afds.add(new Number(lexTable));
+        afds.add(new StringLiteral(lexTable));
         afds.add(new Identifier(lexTable));
     }
 
@@ -56,8 +57,15 @@ public class Lexer {
     }
 
     private void error(){
-        throw new RuntimeException("Error: token not recognized!" +
-                it.current());
+
+        char tokenAtual = it.current();
+        int linhaAtual =  it.getIndex();
+
+        throw new RuntimeException(
+                "Erro léxico na linha " + line +
+                        ": caractere não reconhecido '" + tokenAtual + "'" +
+                        " (posição " + linhaAtual + ")"
+        );
     }
 
 

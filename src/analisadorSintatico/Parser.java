@@ -1,17 +1,12 @@
 package analisadorSintatico;
 
-import analisadorLexico.InputTable;
-import analisadorLexico.LexTable;
 import analisadorLexico.Token;
-
-import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
 
     List<Token> tokens;
     Token token;
-
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -25,7 +20,7 @@ public class Parser {
         return null;
     }
 
-    //Serve para casos onde há mais de uma definição da regra. Evita quebrar no meio da validação
+    // Serve para casos onde há mais de uma definição da regra. Evita quebrar no meio da validação
     public Token peek(){
         if(!tokens.isEmpty())
             return tokens.getFirst();
@@ -45,10 +40,12 @@ public class Parser {
     }
 
     public boolean isOpComp(){
-        String l = peek().getLexema();
-        return l.equals("==") || l.equals("!=")
-                || l.equals("<=") || l.equals(">=")
-                || l.equals(">") || l.equals("<");
+        String t = peek().getTipo();
+        // O léxico gera tipos EQ, GT, GE, LT, LE para os operadores de comparação
+        // != e != não estão no MD, mas assumimos que o léxico os trata com tipos próprios
+        return t.equals("EQ") || t.equals("GT") || t.equals("GE")
+                || t.equals("LT") || t.equals("LE")
+                || peek().getLexema().equals("!="); // confirmar com o léxico
     }
 
     public boolean isFormatador(){
@@ -57,25 +54,36 @@ public class Parser {
     }
 
     private boolean temComando(){
-        // espia se o próximo token pode iniciar um comando
-        String l = peek().getLexema();
-        return l.equals("houdini") || l.equals("problems") ||
-                l.equals("catapult") || l.equals("pleaser") || ... ;
+        if(peek() == null) return false;
+        String t = peek().getTipo();
+        return t.equals("IF")
+                || t.equals("WHILE")
+                || t.equals("FOR")
+                || t.equals("PRINT")
+                || t.equals("INPUT")
+                || t.equals("BREAK")
+                || t.equals("INT")    // atribuicao com tipo
+                || t.equals("FLOAT")  // atribuicao com tipo
+                || t.equals("STRING") // atribuicao com tipo
+                || t.equals("ID");    // atribuicao ou chamada de funcao
     }
 
     private boolean temExpressao(){
-        // espia se o próximo token pode iniciar uma expressão
+        if(peek() == null) return false;
         String t = peek().getTipo();
-        String l = peek().getLexema();
-        return t.equals("id") || t.equals("int") ||
-                t.equals("float") || l.equals("(") || ... ;
+        return t.equals("ID")
+                || t.equals("NUM_INT")
+                || t.equals("NUM_FLOAT")
+                || t.equals("STRING")
+                || t.equals("AP");    // abre parentese "("
     }
 
     public void error(String regra){
-        System.out.println("Erro!");
+        int linha = (token != null && token.getRef() != null) ? token.getRef().getLinha() : -1;
+        System.out.println("Erro sintático na linha " + linha);
         System.out.println("=============");
         System.out.println("Regra: " + regra);
-        System.out.println("Token inválido: ");
+        System.out.println("Token inválido: " + token);
         System.out.println("=============");
     }
 
@@ -88,10 +96,9 @@ public class Parser {
     * palavra    → [a-zA-Z]+[a-zA-Z]*
     num        → [0-9]+
 
-
     int        → num+
     float      → num+ '.' num+
-    string     → `“`palavra*`”`
+    string     → `"`palavra*`"`
 
     tipo       → `space` | `lithium` | `judas`
     atribuicao → tipo id `=` expressao `;`| id `=` expressao `;`
@@ -105,18 +112,16 @@ public class Parser {
 
     condicao   → termo condicao'
     condicao'  → (op_logic | op_comp) termo condicao' | ε
-    termo      → `(` condicao `)`  | int | float | id
 
     saida      → `catapult` `[` expressao `]` `;`
 
     entrada           → `pleaser`  `[` entrada' `]` `;`
-    entrada'          → `“` ponteiros `”` `,` identificadores
+    entrada'          → `"` ponteiros `"` `,` identificadores
     ponteiros         → formatadores ponteiros'
     ponteiros'        → `,` ponteiros | ε
     identificadores   → id identificadores'
     identificadores'  → `,` identificadores | ε
     formatadores      → `%d` | `%f` | `%s`
-
 
     declaracao_funcao       → tipo `PREY` id `[` parametros_declaracao `]` `{` comando*  `HOMETOWN` expressao? `}`
     parametros_declaracao   → tipo id parametros_declaracao' | ε
@@ -137,18 +142,28 @@ public class Parser {
     codigo    → comando* codigo* | ε
     * */
 
+    // ====== REGRAS DA GRAMÁTICA ======//
+
     private boolean id(){
-        return matchT("id");
+        return matchT("ID"); // era "id", léxico gera "ID"
+    }
+
+    private boolean palavra(){
+        // O léxico classifica sequências de letras como "ID"
+        return matchT("ID");
     }
 
     private boolean op_arit(){
-        return matchL("+") || matchL("-") ||matchL("*") ||  matchL("/")
-                || matchL("%");
+        // Operadores aritméticos chegam como lexemas, não têm tipo próprio no léxico
+        return matchL("+") || matchL("-") || matchL("*")
+                || matchL("/") || matchL("%");
     }
 
     private boolean op_comp(){
-        return matchL("==") || matchL("!=") || matchL(">=") || matchL("<=")
-                || matchL(">") || matchL("<");
+        // Léxico gera tipos EQ, GT, GE, LT, LE para comparadores
+        return matchT("EQ") || matchT("GT") || matchT("GE")
+                || matchT("LT") || matchT("LE")
+                || matchL("!="); // confirmar com o léxico
     }
 
     private boolean op_logic(){
@@ -156,14 +171,19 @@ public class Parser {
     }
 
     private boolean tipo(){
-        return matchL("int") || matchL("float") || matchL("string");
+        // Léxico mapeia: space→INT, lithium→FLOAT, judas→STRING
+        return matchT("INT") || matchT("FLOAT") || matchT("STRING");
     }
 
     private boolean atribuicao(){
-        if(peek() != null && peek().getTipo().equals("tipo")){
-            return tipo() && id() && matchL("=") && expressao() && matchL(";");
+        if(peek() != null && (peek().getTipo().equals("INT")
+                || peek().getTipo().equals("FLOAT")
+                || peek().getTipo().equals("STRING"))){
+            // tipo id = expressao ;
+            return tipo() && id() && matchT("OP_ATRI") && expressao() && matchL(";");
         }
-        return (id() && matchL("=") && expressao() && matchL(";"));
+        // id = expressao ;
+        return id() && matchT("OP_ATRI") && expressao() && matchL(";");
     }
 
     private boolean declaracao(){
@@ -171,7 +191,8 @@ public class Parser {
     }
 
     private boolean comentario(){
-        return matchL("~~") && palavra() && matchL("\n");
+        // ~~ é reconhecido pelo léxico como lexema, NEW_LINE é o tipo de \n
+        return matchL("~~") && palavra() && matchT("NEW_LINE");
     }
 
     private boolean expressao(){
@@ -182,15 +203,17 @@ public class Parser {
         if(peek() != null && isOpArit()){
             return op_arit() && termo() && expressaoLinha();
         }
-        //epslon
+        // ε
         return true;
     }
 
     private boolean termo(){
-        if(peek() != null && peek().getLexema().equals("(")) {
-            return matchL("(") && expressao() && matchT(")");
+        if(peek() != null && peek().getTipo().equals("AP")) {
+            // AP = abre parentese "("  |  FP = fecha parentese ")"
+            return matchT("AP") && expressao() && matchT("FP");
         }
-        return matchT("int") || matchT("float") || matchT("string") || matchT("id");
+        return matchT("NUM_INT") || matchT("NUM_FLOAT") // era "int" e "float"
+                || matchT("STRING") || matchT("ID");    // era "string" e "id"
     }
 
     private boolean condicao(){
@@ -198,24 +221,25 @@ public class Parser {
     }
 
     private boolean condicaoLinha(){
-
         if(peek() != null && (isOpLogic() || isOpComp())){
-            return (op_arit() || op_comp()) && termo() && condicaoLinha();
+            return (op_logic() || op_comp()) && termo() && condicaoLinha(); // era op_arit()
         }
-        //epslon
+        // ε
         return true;
     }
 
     private boolean saida(){
-        return matchL("catapult") && matchL("[") && expressao() && matchL("]");
+        // catapult → tipo PRINT no léxico
+        return matchT("PRINT") && matchL("[") && expressao() && matchL("]") && matchL(";");
     }
 
     private boolean entrada(){
-        return matchL("pleaser") && matchL("[") && entradaLinha() && matchL("]");
+        // pleaser → tipo INPUT no léxico
+        return matchT("INPUT") && matchL("[") && entradaLinha() && matchL("]") && matchL(";");
     }
 
     private boolean entradaLinha(){
-        return matchL("\"") && ponteiros() && matchL("\"") && matchL(",") && identificadores();
+        return matchL("\"") && ponteiros() && matchL("\"") && matchL("COMMA") && identificadores();
     }
 
     private boolean ponteiros(){
@@ -223,10 +247,10 @@ public class Parser {
     }
 
     private boolean ponteirosLinha(){
-        if(peek() != null && peek().getTipo().equals(",")){
-            return matchL(",") && ponteiros();
+        if(peek() != null && peek().getLexema().equals(",")){
+            return matchL("COMMA") && ponteiros();
         }
-        //epslon
+        // ε
         return true;
     }
 
@@ -235,10 +259,10 @@ public class Parser {
     }
 
     private boolean identificadoresLinha(){
-        if(peek() != null && peek().getTipo().equals(",")){
-            return matchL(",") && identificadores();
+        if(peek() != null && peek().getLexema().equals(",")){
+            return matchL("COMMA") && identificadores();
         }
-        //epslon
+        // ε
         return true;
     }
 
@@ -246,38 +270,46 @@ public class Parser {
         if(peek() != null && isFormatador()){
             return matchL("%d") || matchL("%f") || matchL("%s");
         }
-        return false;
+        return false; // sem ε, formatador é obrigatório
     }
 
     private boolean declaracaoFuncao(){
-        if(!tipo() || !matchL("PREY") || !id() || !matchL("[") ||
-                !parametrosDeclaracao() || !matchL("]") || !matchL("{"))
+        // PREY e HOMETOWN não estão no KeyWords, chegam como lexema com tipo ID
+        // Confirmar com o léxico se PREY/HOMETOWN são keywords ou identificadores comuns
+        if(!tipo() || !matchL("PREY") || !id() || !matchL("[")
+                || !parametrosDeclaracao() || !matchL("]") || !matchT("AC"))
             return false;
 
-        // comando* → zero ou mais, fica consumindo enquanto tiver comando
+        // comando* → zero ou mais
         while(temComando()){
             if(!comando()) return false;
         }
 
         if(!matchL("HOMETOWN")) return false;
 
-        // expressao? → zero ou um, só tenta se tiver algo que inicia expressao
+        // expressao? → zero ou um
         if(temExpressao()){
             if(!expressao()) return false;
         }
 
-        return matchL("}");
+        return matchT("FC"); // FC = fecha chave "}"
     }
 
     private boolean parametrosDeclaracao(){
-        return tipo() && id() && parametrosDeclaracaoLinha();
+        if(peek() != null && (peek().getTipo().equals("INT")
+                || peek().getTipo().equals("FLOAT")
+                || peek().getTipo().equals("STRING"))){
+            return tipo() && id() && parametrosDeclaracaoLinha();
+        }
+        // ε — sem parâmetros
+        return true;
     }
 
     private boolean parametrosDeclaracaoLinha(){
-        if(peek() != null && peek().getTipo().equals(",")){
-            return matchL(",") && tipo() && parametrosDeclaracao();
+        if(peek() != null && peek().getLexema().equals(",")){
+            return matchL("COMMA") && tipo() && id() && parametrosDeclaracaoLinha();
         }
-        //epslon
+        // ε
         return true;
     }
 
@@ -290,37 +322,131 @@ public class Parser {
     }
 
     private boolean parametrosChamadaLinha(){
-        if(peek() != null && peek().getTipo().equals(",")){
-            return matchL(",") && expressao() && parametrosChamada();
+        if(peek() != null && peek().getLexema().equals(",")){
+            return matchL(",") && expressao() && parametrosChamadaLinha();
         }
-        //epslon
+        // ε
         return true;
     }
 
     private boolean ifs(){
-        return matchL("houdini") && matchL("(") && condicao() && matchL(")")
-                && matchL("{")
+        // houdini → tipo IF no léxico
+        if(!matchT("IF") || !matchT("AP") || !condicao() || !matchT("FP") || !matchT("AC"))
+            return false;
+
+        while(temComando()){
+            if(!comando()) return false;
+        }
+
+        return matchT("FC") && elses();
     }
 
-    private boolean elses(){}
+    private boolean elses(){
+        // more → tipo ELSE no léxico
+        if(peek() != null && peek().getTipo().equals("ELSE")){
+            if(!matchT("ELSE") || !matchT("AC")) return false;
+            while(temComando()){
+                if(!comando()) return false;
+            }
+            return matchT("FC");
+        }
+        // ε
+        return true;
+    }
 
-    private boolean whiles(){}
+    private boolean whiles(){
+        // problems → tipo WHILE no léxico
+        if(!matchT("WHILE") || !matchT("AP") || !condicao() || !matchT("FP") || !matchT("AC"))
+            return false;
 
-    private boolean doWhiles(){}
+        while(temComando()){
+            if(!comando()) return false;
+        }
 
-    private boolean fors(){}
+        return matchT("FC");
+    }
+
+    private boolean doWhiles(){
+        // not...ok não está no KeyWords — chega como lexema, confirmar com o léxico
+        if(!matchL("not...ok") || !matchT("AC")) return false;
+
+        while(temComando()){
+            if(!comando()) return false;
+        }
+
+        // "while" aqui é a palavra reservada problems? Confirmar com o amigo
+        return matchT("FC") && matchT("WHILE")
+                && matchT("AP") && condicao() && matchT("FP") && matchL(";");
+    }
+
+    private boolean fors(){
+        // bloomfield → tipo FOR no léxico
+        if(!matchT("FOR") || !matchT("AP")) return false;
+        if(!atribuicao() || !condicao() || !atribuicao()) return false;
+        if(!matchT("FP") || !matchT("AC")) return false;
+
+        while(temComando()){
+            if(!comando()) return false;
+        }
+
+        return matchT("FC");
+    }
 
     private boolean comando(){
-        return comentario() && atribuicao() && entrada() && saida()
-                && ifs() && whiles() && doWhiles() && fors() && chamadaFuncao();
+        if(peek() == null) return false;
+        String t = peek().getTipo();
+        String l = peek().getLexema();
+
+        if(l.equals("~~"))    return comentario();
+        if(t.equals("IF"))    return ifs();
+        if(t.equals("WHILE")) return whiles();
+        if(t.equals("FOR"))   return fors();
+        if(t.equals("PRINT")) return saida();
+        if(t.equals("INPUT")) return entrada();
+        // ID pode ser atribuição (x = ...) ou chamada de função (f[...])
+        // Precisaria de peek duplo pra distinguir, por ora trata como atribuição
+        if(t.equals("ID"))    return atribuicao();
+        if(t.equals("INT") || t.equals("FLOAT") || t.equals("STRING")) return atribuicao();
+        return false;
     }
 
-    private boolean main(){}
+    public boolean main(){
+        token = getNextToken(); // carrega o primeiro token antes de começar
 
-    private boolean codigo(){}
+        // declaracao_funcao*
+        while(peek() != null && (peek().getTipo().equals("INT")
+                || peek().getTipo().equals("FLOAT")
+                || peek().getTipo().equals("STRING"))){
+            if(!declaracaoFuncao()) return false;
+        }
+
+        // style → tipo START no léxico
+        System.out.println("Antes do START: " + token);
+        if(!matchT("START")) return false;
+
+        System.out.println("Antes do CODIGO: " + token);
+        codigo();
+
+        // borderline → tipo END no léxico
+        System.out.println("Antes do END: " + token);
+        return matchT("END");
+    }
+
+
+
+    private boolean codigo(){
+        // comando* codigo* | ε
+        while(temComando()){
+            if(!comando()) return false;
+        }
+        // ε
+        return true;
+    }
+
+    // ====== MATCH ======//
 
     private boolean matchT(String word){
-        if(token.getTipo().equals(word)){
+        if(token != null && token.getTipo().equals(word)){
             token = getNextToken();
             return true;
         }
@@ -328,13 +454,10 @@ public class Parser {
     }
 
     private boolean matchL(String word){
-        if(token.getLexema().equals(word)){
+        if(token != null && token.getLexema().equals(word)){
             token = getNextToken();
             return true;
         }
         return false;
     }
-
-
-
 }

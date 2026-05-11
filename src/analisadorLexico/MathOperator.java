@@ -92,6 +92,16 @@ public class MathOperator extends AFD {
                 }
             }
 
+            case ';' -> {
+                code.next();
+                yield createToken("SEMI", ";");
+            }
+
+            case ',' -> {
+                code.next();
+                yield createToken("COMMA", ",");
+            }
+
             case CharacterIterator.DONE -> {
                 yield createToken("EOF", "$");
             }

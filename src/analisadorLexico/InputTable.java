@@ -14,6 +14,8 @@ public class InputTable {
         return lexema;
     }
 
+    public int getLinha() {return linha;}
+
 
     @Override
     public String toString() {

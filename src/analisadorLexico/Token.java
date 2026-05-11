@@ -30,6 +30,6 @@ public class Token {
 
     @Override
     public String toString() {
-        return "<" + tipo + "," + line + "," + ref + ">";
+        return "<" + tipo + "," + line + "," + ref.getLexema() + ">";
     }
 }
