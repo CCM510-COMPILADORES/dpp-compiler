@@ -32,9 +32,28 @@ public class StringLiteral extends AFD {
         if(isTokenSeparator(code)) {
             String lexema = string.toString();
             InputTable ref = lexTable.add(lexema, 0);
-            return new Token("STRING", ref);
+
+            String tipo = isFormatadorString(lexema) ? "FORMAT_STRING" : "STR_LIT";
+            return new Token(tipo, ref);
         }
 
         return null;
+    }
+
+    private boolean isFormatadorString(String lexema){
+
+        //remove as aspas pra analisar se é formatador
+        String conteudo = lexema.substring(1, lexema.length()-1).trim();
+
+        if(conteudo.isEmpty()) return false;
+
+        String[] partes = conteudo.split(",");
+        for(String parte : partes){
+            String p = parte.trim();
+            if(!p.equals("%d") && !p.equals("%f") && !p.equals("%s")){
+                return false;
+            }
+        }
+        return true;
     }
 }

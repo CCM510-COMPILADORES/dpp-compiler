@@ -33,6 +33,10 @@ public class KeyWords{
         //parada
         keywords.put("loser", "BREAK");
 
+        //funcoes
+        keywords.put("PREY", "FUNC_DECL");
+        keywords.put("HOMETOWN", "RETURN");
+
     }
 
     public static boolean isKeyWord(String lexema){
