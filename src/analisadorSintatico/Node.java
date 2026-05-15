@@ -55,9 +55,9 @@ public class Node {
         for(Iterator<Node> it = nodes.iterator(); it.hasNext();){
             Node next = it.next();
             if(it.hasNext()){
-                next.print(buffer, childrenPrefix + "+-- ", childrenPrefix + "|");
+                next.print(buffer, childrenPrefix + "+-- ", childrenPrefix + "|   ");
             }else{
-                next.print(buffer, childrenPrefix + "'-- ", childrenPrefix + "");
+                next.print(buffer, childrenPrefix + "'-- ", childrenPrefix + "    ");
             }
         }
     }

@@ -33,7 +33,7 @@ public class ParserTest {
         try {
             Lexer lexer = new Lexer(codigo);
             List<Token> tokens = lexer.getTokens();
-            Parser parser = new Parser(tokens);
+            Parser parser = new Parser(tokens, false);
             boolean resultado = parser.main();
 
             if (resultado == esperado) {
