@@ -1,5 +1,7 @@
 style
+
 space x;
-pleaser("%d", x);
-catapult(x);
+pleasir["%d", x];
+catapult[x];
+
 borderline

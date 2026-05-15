@@ -27,6 +27,9 @@ public class Token {
         return ref;
     }
 
+    public int getLine() {
+        return line;
+    }
 
     @Override
     public String toString() {

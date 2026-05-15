@@ -63,11 +63,8 @@ public class Lexer {
 
         throw new RuntimeException(
                 "Erro léxico na linha " + line +
-                        ": caractere não reconhecido '" + tokenAtual + "'" +
+                        ":\ncaractere não reconhecido '" + tokenAtual + "'" +
                         " (posição " + linhaAtual + ")"
         );
     }
-
-
-
 }

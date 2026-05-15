@@ -11,6 +11,7 @@ public class Parser {
     Token token;
     String traducao = "";   // acumula apenas o corpo (funções + main)
     boolean printArvore;
+    boolean erroJaReportado = false;
 
     boolean usaIo = false;          // std::io — ativado por print ou input
     boolean usaInput = false;       // read_i32()
@@ -51,7 +52,9 @@ public class Parser {
      */
     private String montarArquivoFinal(){
         StringBuilder sb = new StringBuilder();
-        sb.append("#![allow(unused_mut)]\n\n"); // suprime warning de mut desnecessário
+
+        sb.append("#![allow(unused_mut)]\n\n");
+
         // std::io só é necessário quando há print ou input
         if(usaIo){
             sb.append("use std::io;\n\n");
@@ -170,7 +173,9 @@ public class Parser {
     // ====== ERRO E SUCESSO ======//
 
     public void error(String regra){
-        int linha = (token != null && token.getRef() != null) ? token.getRef().getLinha() : -1;
+        if(erroJaReportado) return;
+        erroJaReportado = true;
+        int linha = (token != null) ? token.getLine() : -1;
         System.out.println("Erro sintático na linha " + linha);
         System.out.println("=============");
         System.out.println("Regra: " + regra);
@@ -357,7 +362,11 @@ public class Parser {
 
         // NUM_INT, NUM_FLOAT, STR_LIT
         traduz(token.getLexema());
-        return matchT("NUM_INT", termo) || matchT("NUM_FLOAT", termo) || matchT("STR_LIT", termo);
+        if(matchT("NUM_INT", termo))   return true;
+        if(matchT("NUM_FLOAT", termo)) return true;
+        if(matchT("STR_LIT", termo))   return true;
+        error("NUM_INT | NUM_FLOAT | STR_LIT");
+        return false;
     }
 
     // condicao → termo condicao'
@@ -394,10 +403,10 @@ public class Parser {
         Node saida = node.addNode("saida");
         usaIo = true; // ativa std::io
         traduz("println!(\"{}\", ");
-        if(!matchT("PRINT", saida) || !matchT("AP", saida)) return false;
+        if(!matchT("PRINT", saida) || !matchT("AB", saida)) return false;
         if(!expressao(saida)) return false;
         traduz(");\n");
-        return matchT("FP", saida) && matchT("SEMI", saida);
+        return matchT("FB", saida) && matchT("SEMI", saida);
     }
 
     // entrada → INPUT ( entrada' ) ;
@@ -405,8 +414,8 @@ public class Parser {
     private boolean entrada(Node node){
         Node entrada = node.addNode("entrada");
         usaIo = true; // ativa std::io
-        return matchT("INPUT", entrada) && matchT("AP", entrada)
-                && entradaLinha(entrada) && matchT("FP", entrada) && matchT("SEMI", entrada);
+        return matchT("INPUT", entrada) && matchT("AB", entrada)
+                && entradaLinha(entrada) && matchT("FB", entrada) && matchT("SEMI", entrada);
     }
 
     // entrada' → FORMAT_STRING , identificadores
@@ -696,6 +705,7 @@ public class Parser {
             token = getNextToken();
             return true;
         }
+        error(word); // token atual ainda é o inválido
         return false;
     }
 
@@ -705,6 +715,7 @@ public class Parser {
             token = getNextToken();
             return true;
         }
+        error(word);
         return false;
     }
 }

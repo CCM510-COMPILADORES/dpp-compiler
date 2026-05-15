@@ -1,3 +1,5 @@
+#![allow(unused_mut)]
+
 use std::io;
 
 fn read_i32() -> i32 {
