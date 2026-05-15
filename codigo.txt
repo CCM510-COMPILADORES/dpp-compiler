@@ -1,7 +1,0 @@
-style
-
-space x;
-pleasir["%d", x];
-catapult[x];
-
-borderline
