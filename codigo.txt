@@ -1,0 +1,7 @@
+style
+
+judas x = "string";
+
+catapult[x];
+
+borderline
