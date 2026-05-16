@@ -1,7 +1,10 @@
+lithium PREY multiplicar[lithium a, lithium b]{
+  HOMETOWN a*b
+}
+
 style
+  lithium pi = 3.14;
+  lithium x = 2.5;
 
-judas x = "string";
-
-catapult[x];
-
+  lithium res = multiplicar[pi,x];
 borderline

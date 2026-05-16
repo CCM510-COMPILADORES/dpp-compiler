@@ -1,9 +1,9 @@
 package analisadorSintatico;
 
 import analisadorLexico.Token;
-import java.util.List;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 
 public class Parser {
 
@@ -325,6 +325,17 @@ public class Parser {
         return true;
     }
 
+    // chamada como expressão — sem ; no final (usada dentro de atribuição)
+    private boolean chamadaFuncaoExpr(Node node){
+        Node chamada = node.addNode("chamada_funcao");
+        String nomeFuncao = token != null ? token.getLexema() : "";
+        traduz(nomeFuncao + "(");
+        if(!id(chamada) || !expect("AB", chamada)) return false;
+        if(!parametrosChamada(chamada)) return false;
+        traduz(")");
+        return expect("FB", chamada);
+    }
+
     private boolean termo(Node node){
         if(token == null) return false;
         Node termo = node.addNode("termo");
@@ -338,7 +349,7 @@ public class Parser {
 
         if(token.getTipo().equals("ID")){
             if(peek() != null && peek().getTipo().equals("AB")){
-                return chamadaFuncao(termo);
+                return chamadaFuncaoExpr(termo); // versão sem ; no final
             }
             traduz(token.getLexema());
             return id(termo);
@@ -456,6 +467,7 @@ public class Parser {
         return true;
     }
 
+    // chamada como comando standalone — com ; no final
     private boolean chamadaFuncao(Node node){
         Node chamada = node.addNode("chamada_funcao");
         String nomeFuncao = token != null ? token.getLexema() : "";

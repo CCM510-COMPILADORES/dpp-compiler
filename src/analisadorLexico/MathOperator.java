@@ -104,12 +104,43 @@ public class MathOperator extends AFD {
 
             case '[' -> {
                 code.next();
-                yield createToken("AB", ",");
+                yield createToken("AB", "[");
             }
+
 
             case ']' -> {
                 code.next();
-                yield createToken("FB", ",");
+                yield createToken("FB", "]");
+            }
+
+            case '&' -> {
+                code.next();
+                if (code.current() == '&') {
+                    code.next();
+                    yield createToken("AND", "&&");
+                } else {
+                    yield null;
+                }
+            }
+
+            case '|' -> {
+                code.next();
+                if (code.current() == '|') {
+                    code.next();
+                    yield createToken("OR", "||");
+                } else {
+                    yield null;
+                }
+            }
+
+            case '!' -> {
+                code.next();
+                if (code.current() == '=') {
+                    code.next();
+                    yield createToken("NE", "!=");
+                } else {
+                    yield createToken("NOT", "!");
+                }
             }
 
             case CharacterIterator.DONE -> {
