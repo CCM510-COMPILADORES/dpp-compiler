@@ -218,13 +218,17 @@ O compilador foi desenvolvido em Java e está organizado na seguinte estrutura d
 \begin{lstlisting}
 src/
     analisadorLexico/
-    analisadorSemantico/
+    analisadorSintatico/
     Main.java
+    ParserTest.java
 \end{lstlisting}
+
+Onde \texttt{ParserTest.java} contém testes unitários do analisador sintático. 
 
 \subsection{Pré-requisitos}
 \begin{itemize}
     \item Java JDK 17 ou superior
+    \item Código na linguagem dpp num arquivo .txt em \texttt{src/}
 \end{itemize}
 
 \subsection{Compilação}
@@ -232,7 +236,7 @@ src/
 A compilação deve ser feita a partir da raiz do projeto:
 
 \begin{lstlisting}
-javac -d bin src/Main.java src/analisadorLexico/*.java src/analisadorSemantico/*.java
+javac -d bin src/*.java src/analisadorLexico/*.java src/analisadorSintatico/*.java
 \end{lstlisting}
 
 O comando acima gera os arquivos compilados no diretório \texttt{bin/}.
@@ -242,11 +246,14 @@ O comando acima gera os arquivos compilados no diretório \texttt{bin/}.
 Após a compilação, execute o compilador com:
 
 \begin{lstlisting}
-java -cp bin Main
+java -cp bin Main codigo.txt -o output.rs
 \end{lstlisting}
 
+Use as flags `-t` para ver a lista de tokens (\emph{lex table}) ou `-a` para ver a AST (árvore de derivação da GLC).  
+Use a flag `-o` para definir o nome do arquivo .rs de saída (código escrito  em rust)
+
 % ==========================
-% ==========================
+
 \section{Características da Linguagem}
 
 A linguagem \textbf{Dhara (DPP)} foi projetada com sintaxe inspirada em linguagens tradicionais, como C.
